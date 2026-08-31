@@ -1,0 +1,34 @@
+# How a contact earns a fit score. Every rule matches on something people
+# publish about themselves: schools, degrees, employers, stated affiliations.
+#
+# Add your own rules freely. Higher weight means the contact is drafted sooner.
+
+rules:
+  - label: "UCLA"
+    weight: 4
+    schools: ["University of California, Los Angeles", "UCLA"]
+
+  - label: "UCLA Anderson"
+    weight: 3
+    schools: ["Anderson School of Management", "UCLA Anderson"]
+
+  - label: "UC system"
+    weight: 2
+    schools:
+      - "University of California, Berkeley"
+      - "University of California, San Diego"
+      - "University of California, Davis"
+      - "University of California, Irvine"
+      - "University of California, Santa Barbara"
+      - "University of California, Santa Cruz"
+      - "University of California, Riverside"
+      - "University of California, Merced"
+
+  - label: "Southern California"
+    weight: 1
+    keywords: ["Los Angeles", "Century City", "Santa Monica"]
+
+  # Example of an interest-based rule. Matches on title text.
+  - label: "Leveraged finance"
+    weight: 1
+    keywords: ["Leveraged Finance", "LevFin", "Financial Sponsors"]

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-head">
+  <h1>Banks</h1>
+  <form method="post" action="/banks/upload" enctype="multipart/form-data" class="search">
+    <input type="file" name="file" accept=".csv" required>
+    <button type="submit" class="quiet">Load CSV</button>
+  </form>
+</div>
+
+<p class="lede">Export your sheet as CSV with columns
+<code>name, domain, category, priority</code>. Priority 1 gets searched and
+drafted first. Uploading replaces the whole list.</p>
+
+{% if not banks %}
+<p class="empty">No banks loaded. Upload your CSV above.</p>
+{% else %}
+<table class="ledger">
+  <thead>
+    <tr><th class="num">Pri</th><th>Bank</th><th>Domain</th><th>Tier</th><th class="num">Contacts</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for b in banks %}
+    <tr class="{{ 'off' if not b.active }}">
+      <td class="num mono">{{ b.priority }}</td>
+      <td>{{ b.name }}</td>
+      <td class="mono small dim">{{ b.domain or "not set" }}</td>
+      <td><span class="tier-tag">{{ b.category or "—" }}</span></td>
+      <td class="num mono">{{ b.contact_count }}</td>
+      <td class="right">
+        <form method="post" action="/banks/{{ b.id }}/toggle">
+          <button type="submit" class="quiet small">{{ "Pause" if b.active else "Resume" }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% endblock %}

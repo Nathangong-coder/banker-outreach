@@ -1,0 +1,73 @@
+name: Daily outreach
+
+on:
+  schedule:
+    # 13:30 UTC — 6:30am Pacific. Drafts are waiting when you open Gmail.
+    - cron: "30 13 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Which stage to run"
+        required: true
+        default: daily
+        type: choice
+        options: [daily, refresh, enrich, draft, push]
+
+concurrency:
+  # Two runs writing the same SQLite file would fight over the commit.
+  group: outreach-db
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Run pipeline
+        env:
+          APOLLO_API_KEYS: ${{ secrets.APOLLO_API_KEYS }}
+          LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'anthropic' }}
+          LLM_MODEL: ${{ vars.LLM_MODEL || 'claude-sonnet-4-6' }}
+          ANTHROPIC_API_KEYS: ${{ secrets.ANTHROPIC_API_KEYS }}
+          OPENAI_API_KEYS: ${{ secrets.OPENAI_API_KEYS }}
+          GOOGLE_API_KEYS: ${{ secrets.GOOGLE_API_KEYS }}
+          OPENROUTER_API_KEYS: ${{ secrets.OPENROUTER_API_KEYS }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          SENDER_NAME: ${{ vars.SENDER_NAME }}
+          SENDER_EMAIL: ${{ vars.SENDER_EMAIL }}
+          SENDER_BLURB: ${{ vars.SENDER_BLURB }}
+          DRAFTS_PER_DAY: ${{ vars.DRAFTS_PER_DAY || '12' }}
+          ENRICH_BATCH: ${{ vars.ENRICH_BATCH || '10' }}
+        run: |
+          python -m src.cli load-banks
+          python -m src.cli ${{ inputs.stage || 'daily' }}
+          python -m src.cli status
+
+      - name: Commit the database
+        run: |
+          # Checkpoint WAL so the .db file holds everything before committing.
+          python -c "import sqlite3; c=sqlite3.connect('data/outreach.db'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()"
+          git config user.name "outreach-bot"
+          git config user.email "actions@github.com"
+          git add data/outreach.db
+          if git diff --staged --quiet; then
+            echo "Nothing changed."
+          else
+            git commit -m "chore: outreach run $(date -u +%Y-%m-%d)"
+            # Someone may have pushed local edits since checkout.
+            git pull --rebase --autostash origin ${{ github.ref_name }}
+            git push
+          fi

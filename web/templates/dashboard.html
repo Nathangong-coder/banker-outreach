@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if gaps %}
+<div class="notice">
+  <p><strong>Not ready to run yet.</strong> Add these to <code>.env</code>, then
+  restart: {{ gaps | join(", ") }}.</p>
+</div>
+{% endif %}
+
+<section class="stage-flow">
+  <h1>Pipeline</h1>
+  <p class="lede">Each stage hands off to the next. Contacts sit in a stage until
+  the stage after it picks them up.</p>
+
+  <ol class="stages">
+    <li>
+      <span class="stage-name">Found</span>
+      <span class="stage-count">{{ counts.get('new', 0) }}</span>
+      <span class="stage-note">searched, no email yet</span>
+    </li>
+    <li>
+      <span class="stage-name">Enriched</span>
+      <span class="stage-count">{{ counts.get('enriched', 0) }}</span>
+      <span class="stage-note">address verified, scored</span>
+    </li>
+    <li>
+      <span class="stage-name">Drafted</span>
+      <span class="stage-count">{{ counts.get('drafted', 0) }}</span>
+      <span class="stage-note">waiting on your review</span>
+    </li>
+    <li>
+      <span class="stage-name">In Gmail</span>
+      <span class="stage-count">{{ counts.get('queued', 0) }}</span>
+      <span class="stage-note">yours to send</span>
+    </li>
+  </ol>
+
+  <div class="stage-aside">
+    <span>{{ counts.get('banks', 0) }} banks active</span>
+    <span>{{ counts.get('no_email', 0) }} no address found</span>
+    <span>{{ counts.get('skipped', 0) }} skipped</span>
+  </div>
+</section>
+
+<section class="controls">
+  <h2>Run a stage</h2>
+  <div class="control-row">
+    <form method="post" action="/run/refresh">
+      <button type="submit">Search all banks</button>
+      <span class="hint">Monthly. Burns the most credits.</span>
+    </form>
+    <form method="post" action="/run/enrich">
+      <button type="submit">Reveal emails</button>
+      <span class="hint">{{ cfg.enrich_batch if cfg else 10 }} at a time.</span>
+    </form>
+    <form method="post" action="/run/draft">
+      <button type="submit">Write drafts</button>
+      <span class="hint">Top scorers with a verified address.</span>
+    </form>
+    <form method="post" action="/run/push">
+      <button type="submit">Send approved to Gmail</button>
+      <span class="hint">Creates drafts. Never sends.</span>
+    </form>
+  </div>
+</section>
+
+<section>
+  <h2>Run log</h2>
+  {% if runs %}
+  <table class="ledger">
+    <thead>
+      <tr><th>Job</th><th>Started</th><th>Result</th></tr>
+    </thead>
+    <tbody>
+      {% for r in runs %}
+      <tr>
+        <td class="mono">{{ r.kind }}</td>
+        <td class="mono dim">{{ r.started_at }}</td>
+        <td>
+          {% if r.error %}<span class="bad">{{ r.error }}</span>
+          {% elif not r.finished_at %}<span class="dim">running</span>
+          {% else %}<span class="mono small">{{ r.stats | tojson }}</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No runs yet. Load your bank list, then search.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

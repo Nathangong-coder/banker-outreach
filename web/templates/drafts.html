@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-head">
+  <h1>Drafts</h1>
+  <div class="filters">
+    {% for s in ["pending", "approved", "in_gmail", "rejected"] %}
+    <a href="/drafts?status={{ s }}" class="chip {{ 'on' if status == s }}">
+      {{ s.replace("_", " ") }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+{% if not drafts %}
+<p class="empty">Nothing {{ status.replace("_", " ") }}. Run
+<a href="/">Write drafts</a> to fill this up.</p>
+{% endif %}
+
+{% for d in drafts %}
+<article class="tearsheet">
+  <div class="tear-rail">
+    <span class="tier">{{ d.category or "—" }}</span>
+    <span class="score" title="affinity score">{{ d.affinity_score }}</span>
+  </div>
+
+  <div class="tear-body">
+    <header class="tear-head">
+      <div>
+        <h3>{{ d.first_name }} {{ d.last_name }}</h3>
+        <p class="tear-title">{{ d.title }} · {{ d.bank_name }}</p>
+      </div>
+      <p class="tear-addr mono">{{ d.email }}</p>
+    </header>
+
+    {% if d.reasons %}
+    <p class="reasons">
+      {% for r in d.reasons %}<span class="reason">{{ r }}</span>{% endfor %}
+    </p>
+    {% endif %}
+
+    <form method="post" action="/drafts/{{ d.id }}/save" class="tear-form">
+      <label>
+        <span class="field-label">Subject</span>
+        <input type="text" name="subject" value="{{ d.subject }}">
+      </label>
+      <label>
+        <span class="field-label">Body</span>
+        <textarea name="body" rows="9">{{ d.body }}</textarea>
+      </label>
+      <div class="tear-actions">
+        <button type="submit" class="quiet">Save edits</button>
+        <button type="submit" formaction="/drafts/{{ d.id }}/approve"
+                class="primary">Approve</button>
+        <button type="submit" formaction="/drafts/{{ d.id }}/reject"
+                class="danger">Skip</button>
+        <span class="mono dim small">{{ d.model }}</span>
+      </div>
+    </form>
+  </div>
+</article>
+{% endfor %}
+
+{% endblock %}

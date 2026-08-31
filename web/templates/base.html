@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Outreach{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="masthead-mark">
+    <span class="mark-rule"></span>
+    <span class="mark-name">Outreach</span>
+    <span class="mark-sub">coverage desk</span>
+  </div>
+  <nav>
+    <a href="/" class="{{ 'on' if nav == 'dashboard' }}">Today</a>
+    <a href="/drafts" class="{{ 'on' if nav == 'drafts' }}">Drafts</a>
+    <a href="/contacts" class="{{ 'on' if nav == 'contacts' }}">Pool</a>
+    <a href="/banks" class="{{ 'on' if nav == 'banks' }}">Banks</a>
+    <a href="/settings" class="{{ 'on' if nav == 'settings' }}">Keys</a>
+  </nav>
+</header>
+
+{% if last_run and last_run.stage %}
+<div class="flash">
+  <span class="flash-label">{{ last_run.stage }}</span>
+  {% if last_run.result is none %}
+    running in the background, refresh for the result
+  {% elif last_run.result.error %}
+    <span class="bad">{{ last_run.result.error }}</span>
+  {% else %}
+    {{ last_run.result | tojson }}
+  {% endif %}
+</div>
+{% endif %}
+
+<main>
+{% block content %}{% endblock %}
+</main>
+
+<footer>
+  <span>Drafts only. Nothing here sends mail on its own.</span>
+</footer>
+</body>
+</html>

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Keys and limits</h1>
+<p class="lede">Keys live in <code>.env</code> on this machine and in your repo
+secrets for the scheduled run. They are never written to the database and never
+shown here in full.</p>
+
+{% if gaps %}
+<div class="notice"><p><strong>Missing:</strong> {{ gaps | join(", ") }}</p></div>
+{% endif %}
+
+<section>
+  <h2>Apollo</h2>
+  {% if apollo_keys %}
+  <table class="ledger">
+    <thead><tr><th>Key</th><th>Status</th><th class="num">Calls</th><th class="num">Errors</th></tr></thead>
+    <tbody>
+      {% for k in apollo_keys %}
+      <tr>
+        <td class="mono">{{ k.label }}</td>
+        <td><span class="stage-tag">{{ k.status }}</span></td>
+        <td class="num mono">{{ k.calls }}</td>
+        <td class="num mono">{{ k.errors }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">Set several with <code>APOLLO_API_KEYS=key1,key2,key3</code>.
+  A rate-limited key rests while the others keep working.</p>
+  {% else %}
+  <p class="empty">No Apollo keys set.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Model — {{ cfg.llm.provider }}</h2>
+  {% if model_keys %}
+  <table class="ledger">
+    <thead><tr><th>Key</th><th>Status</th><th class="num">Calls</th><th class="num">Errors</th></tr></thead>
+    <tbody>
+      {% for k in model_keys %}
+      <tr>
+        <td class="mono">{{ k.label }}</td>
+        <td><span class="stage-tag">{{ k.status }}</span></td>
+        <td class="num mono">{{ k.calls }}</td>
+        <td class="num mono">{{ k.errors }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No model keys set.</p>
+  {% endif %}
+  <p class="hint">Model: <code class="mono">{{ cfg.llm.model }}</code>. Switch
+  providers with <code>LLM_PROVIDER</code> and <code>LLM_MODEL</code>.
+  Supported: anthropic, openai, google, openrouter.</p>
+</section>
+
+<section>
+  <h2>Limits</h2>
+  <dl class="specs">
+    <dt>Drafts per day</dt><dd class="mono">{{ cfg.drafts_per_day }}</dd>
+    <dt>Emails revealed per batch</dt><dd class="mono">{{ cfg.enrich_batch }}</dd>
+    <dt>People per bank per search</dt><dd class="mono">{{ cfg.search_per_bank }}</dd>
+    <dt>Minimum fit score to draft</dt><dd class="mono">{{ cfg.min_affinity }}</dd>
+    <dt>Titles searched</dt><dd>{{ cfg.target_titles | join(", ") }}</dd>
+  </dl>
+  <p class="hint">Keeping drafts per day in the low teens protects your sending
+  reputation and keeps follow-up manageable.</p>
+</section>
+
+{% endblock %}
