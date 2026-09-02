@@ -27,8 +27,3 @@ rules:
   - label: "Southern California"
     weight: 1
     keywords: ["Los Angeles", "Century City", "Santa Monica"]
-
-  # Example of an interest-based rule. Matches on title text.
-  - label: "Leveraged finance"
-    weight: 1
-    keywords: ["Leveraged Finance", "LevFin", "Financial Sponsors"]
